@@ -1,0 +1,74 @@
+version: '3.7'
+networks:
+  keycloak-network:
+    driver: bridge
+    name: keycloak-network
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.96.0/20
+services:
+  keycloak:
+    image: jboss/keycloak
+    networks:
+      keycloak-network:
+        ipv4_address: 192.168.96.2
+    hostname: keycloak
+    container_name: keycloak
+    ports:
+      - 8080:8080
+      - 9990:9990
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      DB_VENDOR: h2
+    volumes:
+       - ./keycloak/customization:/opt/jboss/keycloak/customization/
+    #command: ["-b", "0.0.0.0", "-Dkeycloak.migration.action=import", "-Dkeycloak.migration.provider=dir", "-Dkeycloak.migration.dir=/opt/jboss/keycloak/customization/files/", "-Dkeycloak.migration.strategy=OVERWRITE_EXISTING"]
+    entrypoint: /opt/jboss/tools/docker-entrypoint.sh
+  oauth-2.0-provider:
+    image: nicolasduminil/openjdk11-with-tools
+    depends_on:
+      - keycloak
+    container_name: oauth-2.0-provider
+    links:
+      - keycloak:keycloak
+    volumes:
+      - ../docker:/usr/share/service-orchestration
+    hostname: oauth-2.0-provider
+    ports:
+      - "8085:8085"
+    entrypoint: /usr/share/service-orchestration/oauth-2.0-provider/run.sh
+    environment:
+      OAUTH20_HOST: 192.168.96.9
+      OAUTH20_PORT: "8085"
+      KEYCLOAKSERVER_HOST: 192.168.96.2
+      KEYCLOAKSERVER_PORT: "8080"
+    networks:
+      keycloak-network:
+        ipv4_address: 192.168.96.9
+  press-release:
+    image: nicolasduminil/openjdk11-with-tools
+    depends_on:
+      - keycloak
+      - oauth-2.0-provider
+    container_name: press-release
+    links:
+      - keycloak:keycloak
+      - oauth-2.0-provider:oauth-2.0-provider
+    volumes:
+      - ../docker:/usr/share/service-orchestration
+    hostname: press-release
+    ports:
+      - "8081:8081"
+    entrypoint: /usr/share/service-orchestration/press-release/run.sh
+    environment:
+      PRESS_RELEASE_HOST: 192.168.96.12
+      PRESS_RELEASE_PORT: "8081"
+      OAUTH20_HOST: 192.168.96.9
+      OAUTH20_PORT: "8085"
+    networks:
+      keycloak-network:
+        ipv4_address: 192.168.96.12

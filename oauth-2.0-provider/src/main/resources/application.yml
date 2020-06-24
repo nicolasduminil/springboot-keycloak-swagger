@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: uaa
+server:
+  servlet:
+    contextPath: /uaa
+logging:
+  level:
+    root: ERROR
+    org.springframework.web: INFO
+    fr.simplex_software.security: DEBUG
+keycloak:
+  auth-server-url: http://192.168.96.2:8080/auth
+  realm: press-release
+  ssl-required: external
+  resource: curl
+  public-client: true
+  #bearer-only: true
+keycloak.securityConstraints[0].securityCollections[0].name: "protected"
+keycloak.securityConstraints[0].authRoles[0]: "prmanager"
+keycloak.securityConstraints[0].securityCollections[0].patterns[0]: "/auth/*"
+oauth-2.0-provider:
+  user-name: pradmin
+  user-password: password1
+  client-id: curl

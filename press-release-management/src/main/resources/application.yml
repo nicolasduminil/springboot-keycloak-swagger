@@ -1,0 +1,21 @@
+server:
+  servlet:
+    contextPath: /pr
+keycloak:
+  auth-server-url: http://192.168.96.2:8080/auth
+  realm: press-release
+  resource: prclient
+  public-client: false
+  bearer-only: true
+  use-resource-role-mappings: true
+  cors: true
+  credentials:
+    secret: thisissecret
+  security-constraints[0]:
+    authRoles[0]: prmanager
+    securityCollections[0]:
+      patterns[0]: /api/*
+swagger:
+  auth:
+    token-url: http://192.168.96.2:8080/auth/realms/press-release/protocol/openid-connect/token/
+    client-id: curl
